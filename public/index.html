@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Osuny Manager</title>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <!-- Polices IBM Plex -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- App styles -->
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────────── -->
+  <header id="app-header" class="d-flex align-items-center px-3 gap-3">
+    <div class="app-logo">⌘ osuny<span>-manager</span></div>
+    <div class="d-flex gap-4 ms-auto align-items-center">
+      <span class="header-stat"><strong id="stat-total">—</strong> sites</span>
+      <span class="header-stat"><strong id="stat-selected">0</strong> sélect.</span>
+      <span class="header-stat" id="stat-modified" style="display:none">
+        <strong id="stat-mod-count" class="text-warning">0</strong> modifiés
+      </span>
+      <div id="ws-dot" title="WebSocket"></div>
+    </div>
+  </header>
+
+  <!-- ── Sidebar ────────────────────────────────────────────────────────────── -->
+  <nav id="sidebar">
+    <div class="nav-section-label">Sites</div>
+    <a class="nav-link active" data-panel="sites" onclick="showPanel('sites')">
+      <span class="nav-icon">🗂</span> Sites
+    </a>
+    <a class="nav-link" data-panel="submodules" onclick="showPanel('submodules')">
+      <span class="nav-icon">🔗</span> Submodules
+    </a>
+
+    <div class="nav-section-label mt-2">Tests</div>
+    <a class="nav-link" data-panel="w3c" onclick="showPanel('w3c')">
+      <span class="nav-icon">✅</span> Validateur W3C
+    </a>
+    <a class="nav-link" data-panel="schema" onclick="showPanel('schema')">
+      <span class="nav-icon">🔖</span> Schema.org
+    </a>
+    <a class="nav-link" data-panel="pagespeed" onclick="showPanel('pagespeed')">
+      <span class="nav-icon">⚡</span> PageSpeed
+    </a>
+
+    <div class="nav-section-label mt-2">Config</div>
+    <a class="nav-link" data-panel="settings" onclick="showPanel('settings')">
+      <span class="nav-icon">⚙️</span> Paramètres
+    </a>
+  </nav>
+
+  <!-- ── Main ───────────────────────────────────────────────────────────────── -->
+  <main id="main-content">
+
+    <!-- ── Panel : Sites ──────────────────────────────────────────────────── -->
+    <div class="panel active" id="panel-sites">
+      <div class="panel-header d-flex align-items-center gap-2 flex-wrap">
+        <div>
+          <h1 class="panel-title">Sites Osuny</h1>
+          <div class="panel-subtitle" id="sites-path">—</div>
+        </div>
+        <div class="ms-auto d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-secondary btn-sm" onclick="selectAll()">Tout</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="selectNone()">Aucun</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="selectModified()" title="Sélectionner les sites avec submodules modifiés">Modifiés</button>
+          <div class="vr"></div>
+          <button class="btn btn-primary btn-sm" onclick="loadSites(true)">↺ Actualiser</button>
+        </div>
+      </div>
+
+      <!-- Barre de filtres -->
+      <div class="d-flex gap-2 px-3 py-2 border-bottom flex-wrap" style="background:var(--om-surface);flex-shrink:0;">
+        <input class="form-control form-control-sm" style="max-width:260px;"
+               type="text" id="site-search" placeholder="Filtrer par nom…" oninput="filterSites()">
+        <select class="form-select form-select-sm" style="max-width:200px;"
+                id="filter-status" onchange="filterSites()">
+          <option value="">Tous les statuts</option>
+          <option value="ok">✅ À jour</option>
+          <option value="modified">⚠️ Modifiés</option>
+          <option value="uninitialized">❌ Non initialisés</option>
+          <option value="nomodules">— Sans submodules</option>
+        </select>
+        <div class="vr"></div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showPanel('submodules')">🔗 Submodules →</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="quickAction('w3c')">✅ W3C →</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="quickAction('pagespeed')">⚡ PageSpeed →</button>
+      </div>
+
+      <!-- Liste des sites -->
+      <div id="sites-list">
+        <div class="site-row site-row-header">
+          <div><input type="checkbox" class="form-check-input" id="chk-all" onchange="toggleAll(this.checked)"></div>
+          <div>Nom du site</div>
+          <div>Submodules</div>
+          <div></div>
+          <div></div>
+        </div>
+        <div id="sites-container">
+          <div class="empty-state"><div class="spinner-xs"></div><br>Chargement…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Panel : Submodules ──────────────────────────────────────────────── -->
+    <div class="panel" id="panel-submodules">
+      <div class="panel-header d-flex align-items-center gap-2 flex-wrap">
+        <div>
+          <h1 class="panel-title">Submodules</h1>
+          <div class="panel-subtitle" id="submod-count">—</div>
+        </div>
+        <div class="ms-auto">
+          <button class="btn btn-danger btn-sm" id="btn-cancel-submod"
+                  style="display:none" onclick="cancelSubmoduleJob()">⏹ Annuler</button>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="px-3 py-2 border-bottom" style="flex-shrink:0;">
+        <div class="row g-2 mb-2">
+          <div class="col-md-4">
+            <label class="form-label">Modules cibles</label>
+            <select class="form-select form-select-sm" id="submod-target">
+              <option value="">Tous les submodules</option>
+              <option value="themes/osuny">Thème (themes/osuny)</option>
+              <option value="themes/osuny-theme">Sous-thème (themes/osuny-theme)</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Périmètre</label>
+            <select class="form-select form-select-sm" id="submod-scope">
+              <option value="selected">Sites sélectionnés</option>
+              <option value="all">Tous les sites</option>
+              <option value="modified">Sites avec submodules modifiés</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Parallélisme</label>
+            <select class="form-select form-select-sm" id="submod-concurrency">
+              <option value="1">1 (séquentiel)</option>
+              <option value="2">2</option>
+              <option value="4" selected>4</option>
+              <option value="8">8</option>
+              <option value="16">16</option>
+            </select>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary btn-sm" onclick="runSubmoduleUpdate()">▶ Mettre à jour</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="runSubmoduleInit()">⚙ Initialiser</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="clearTermSubmod()">✕ Vider</button>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="terminal-wrap">
+        <div class="terminal-bar">
+          <span class="job-badge idle" id="badge-submod">Inactif</span>
+          <div class="progress-thin"><div class="progress-bar" id="bar-submod"></div></div>
+          <span class="text-muted" id="progress-text-submod" style="font-size:11px;font-family:var(--om-mono);white-space:nowrap;"></span>
+        </div>
+        <pre class="terminal-output" id="term-submod"></pre>
+      </div>
+    </div>
+
+    <!-- ── Panel : W3C ────────────────────────────────────────────────────── -->
+    <div class="panel" id="panel-w3c">
+      <div class="panel-header d-flex align-items-center gap-2">
+        <div>
+          <h1 class="panel-title">Validateur W3C</h1>
+          <div class="panel-subtitle">validator.w3.org/nu — validation HTML</div>
+        </div>
+        <div class="ms-auto">
+          <button class="btn btn-danger btn-sm" id="btn-cancel-w3c"
+                  style="display:none" onclick="cancelTest('w3c')">⏹ Annuler</button>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 border-bottom" style="flex-shrink:0;">
+        <div class="row g-2 mb-2">
+          <div class="col-md-8">
+            <label class="form-label">URLs à tester <span class="text-muted fw-normal">(une par ligne)</span></label>
+            <textarea class="form-control form-control-sm" id="urls-w3c" rows="4"
+                      placeholder="https://exemple.fr&#10;https://autre-site.fr/page"></textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Échantillon automatique</label>
+            <select class="form-select form-select-sm mb-1" id="sample-size-w3c">
+              <option value="5">5 pages</option>
+              <option value="10" selected>10 pages</option>
+              <option value="25">25 pages</option>
+              <option value="50">50 pages</option>
+            </select>
+            <button class="btn btn-outline-secondary btn-sm w-100 mb-1" onclick="buildSample('w3c')">⚄ Échantillon aléatoire</button>
+            <div class="form-text" id="sample-info-w3c"></div>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary btn-sm" onclick="runW3C()">▶ Lancer</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="clearPanel('w3c')">✕ Vider</button>
+          <button class="btn btn-outline-secondary btn-sm" id="btn-export-w3c" style="display:none" onclick="exportCSV('w3c')">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div class="terminal-wrap">
+        <div class="terminal-bar">
+          <span class="job-badge idle" id="badge-w3c">Inactif</span>
+          <div class="progress-thin"><div class="progress-bar" id="bar-w3c"></div></div>
+          <span class="text-muted" id="progress-text-w3c" style="font-size:11px;font-family:var(--om-mono);"></span>
+        </div>
+        <pre class="terminal-output" id="term-w3c"></pre>
+      </div>
+
+      <div class="results-wrap" id="results-wrap-w3c" style="display:none">
+        <table class="results-table">
+          <thead><tr><th>URL</th><th>Erreurs</th><th>Avert.</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="results-tbody-w3c"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Panel : Schema.org ─────────────────────────────────────────────── -->
+    <div class="panel" id="panel-schema">
+      <div class="panel-header d-flex align-items-center gap-2">
+        <div>
+          <h1 class="panel-title">Schema.org</h1>
+          <div class="panel-subtitle">validator.schema.org — données structurées JSON-LD</div>
+        </div>
+        <div class="ms-auto">
+          <button class="btn btn-danger btn-sm" id="btn-cancel-schema"
+                  style="display:none" onclick="cancelTest('schema')">⏹ Annuler</button>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 border-bottom" style="flex-shrink:0;">
+        <div class="row g-2 mb-2">
+          <div class="col-md-8">
+            <label class="form-label">URLs à tester</label>
+            <textarea class="form-control form-control-sm" id="urls-schema" rows="4"
+                      placeholder="https://exemple.fr&#10;https://autre-site.fr/page"></textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Échantillon automatique</label>
+            <select class="form-select form-select-sm mb-1" id="sample-size-schema">
+              <option value="5">5 pages</option>
+              <option value="10" selected>10 pages</option>
+              <option value="25">25 pages</option>
+            </select>
+            <button class="btn btn-outline-secondary btn-sm w-100 mb-1" onclick="buildSample('schema')">⚄ Échantillon aléatoire</button>
+            <div class="form-text" id="sample-info-schema"></div>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary btn-sm" onclick="runSchema()">▶ Lancer</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="clearPanel('schema')">✕ Vider</button>
+          <button class="btn btn-outline-secondary btn-sm" id="btn-export-schema" style="display:none" onclick="exportCSV('schema')">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div class="terminal-wrap">
+        <div class="terminal-bar">
+          <span class="job-badge idle" id="badge-schema">Inactif</span>
+          <div class="progress-thin"><div class="progress-bar" id="bar-schema"></div></div>
+          <span class="text-muted" id="progress-text-schema" style="font-size:11px;font-family:var(--om-mono);"></span>
+        </div>
+        <pre class="terminal-output" id="term-schema"></pre>
+      </div>
+
+      <div class="results-wrap" id="results-wrap-schema" style="display:none">
+        <table class="results-table">
+          <thead><tr><th>URL</th><th>Erreurs</th><th>Triplets</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="results-tbody-schema"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Panel : PageSpeed ──────────────────────────────────────────────── -->
+    <div class="panel" id="panel-pagespeed">
+      <div class="panel-header d-flex align-items-center gap-2">
+        <div>
+          <h1 class="panel-title">PageSpeed Insights</h1>
+          <div class="panel-subtitle">Google Lighthouse — Core Web Vitals</div>
+        </div>
+        <div class="ms-auto">
+          <button class="btn btn-danger btn-sm" id="btn-cancel-pagespeed"
+                  style="display:none" onclick="cancelTest('pagespeed')">⏹ Annuler</button>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 border-bottom" style="flex-shrink:0;">
+        <div class="row g-2 mb-2">
+          <div class="col-md-8">
+            <label class="form-label">URLs à tester</label>
+            <textarea class="form-control form-control-sm" id="urls-pagespeed" rows="4"
+                      placeholder="https://exemple.fr"></textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Options</label>
+            <select class="form-select form-select-sm mb-1" id="ps-strategy">
+              <option value="mobile">📱 Mobile</option>
+              <option value="desktop">🖥 Desktop</option>
+            </select>
+            <select class="form-select form-select-sm mb-1" id="sample-size-pagespeed">
+              <option value="5">5 pages</option>
+              <option value="10" selected>10 pages</option>
+              <option value="25">25 pages</option>
+            </select>
+            <button class="btn btn-outline-secondary btn-sm w-100 mb-1" onclick="buildSample('pagespeed')">⚄ Échantillon aléatoire</button>
+            <div class="form-text" id="sample-info-pagespeed"></div>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary btn-sm" onclick="runPagespeed()">▶ Lancer</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="clearPanel('pagespeed')">✕ Vider</button>
+          <button class="btn btn-outline-secondary btn-sm" id="btn-export-pagespeed" style="display:none" onclick="exportCSV('pagespeed')">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div class="terminal-wrap">
+        <div class="terminal-bar">
+          <span class="job-badge idle" id="badge-pagespeed">Inactif</span>
+          <div class="progress-thin"><div class="progress-bar" id="bar-pagespeed"></div></div>
+          <span class="text-muted" id="progress-text-pagespeed" style="font-size:11px;font-family:var(--om-mono);"></span>
+        </div>
+        <pre class="terminal-output" id="term-pagespeed"></pre>
+      </div>
+
+      <div class="results-wrap" id="results-wrap-pagespeed" style="display:none">
+        <table class="results-table">
+          <thead><tr><th>URL</th><th>Perf.</th><th>A11y</th><th>SEO</th><th>BP</th><th>LCP</th><th>CLS</th><th>TBT</th><th></th></tr></thead>
+          <tbody id="results-tbody-pagespeed"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Panel : Paramètres ─────────────────────────────────────────────── -->
+    <div class="panel" id="panel-settings">
+      <div class="panel-header">
+        <h1 class="panel-title">Paramètres</h1>
+      </div>
+      <div class="p-4" style="max-width:600px;overflow-y:auto;flex:1;">
+
+        <h6 class="border-bottom pb-2 mb-3">Répertoire des sites</h6>
+        <div class="mb-4">
+          <label class="form-label" for="cfg-sites-root">Chemin racine</label>
+          <input class="form-control form-control-sm" type="text" id="cfg-sites-root"
+                 placeholder="/home/user/sites">
+          <div class="form-text">Dossier qui contient tous vos sites Osuny. Ex : /var/www, ~/projects/sites</div>
+        </div>
+
+        <h6 class="border-bottom pb-2 mb-3">Submodules</h6>
+        <div class="row g-2 mb-2">
+          <div class="col-md-6">
+            <label class="form-label" for="cfg-theme">Thème principal</label>
+            <input class="form-control form-control-sm" type="text" id="cfg-theme" placeholder="themes/osuny">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="cfg-subtheme">Sous-thème</label>
+            <input class="form-control form-control-sm" type="text" id="cfg-subtheme" placeholder="themes/osuny-theme">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label" for="cfg-concurrency">Parallélisme par défaut</label>
+          <select class="form-select form-select-sm" id="cfg-concurrency" style="max-width:200px;">
+            <option value="1">1 (séquentiel)</option>
+            <option value="2">2</option>
+            <option value="4">4 (recommandé)</option>
+            <option value="8">8</option>
+          </select>
+          <div class="form-text">Nombre de sites traités simultanément lors des mises à jour.</div>
+        </div>
+
+        <h6 class="border-bottom pb-2 mb-3">APIs externes</h6>
+        <div class="mb-4">
+          <label class="form-label" for="cfg-psi-key">Clé API Google PageSpeed <span class="fw-normal text-muted">(optionnel)</span></label>
+          <input class="form-control form-control-sm" type="text" id="cfg-psi-key" placeholder="AIza…">
+          <div class="form-text">
+            Sans clé : ~25 requêtes/jour. Gratuite sur
+            <a href="https://developers.google.com/speed/docs/insights/v5/get-started" target="_blank">Google Cloud Console</a>.
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+          <button class="btn btn-primary btn-sm" onclick="saveSettings()">💾 Enregistrer</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="clearCaches()">🗑 Vider les caches</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Conteneur toasts -->
+<div id="toast-container"></div>
+
+<!-- Bootstrap JS (nécessaire pour les composants interactifs) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Application (ES modules) -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
