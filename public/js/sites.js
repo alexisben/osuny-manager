@@ -22,7 +22,7 @@ export let siteUrls = {};       // name → url | null
 
 export async function loadSites(force = false) {
   const container = document.getElementById('sites-container');
-  container.innerHTML = '<div class="empty-state"><div class="spinner-xs"></div><br>Découverte des sites…</div>';
+  container.innerHTML = '<div class="empty-state"><span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span><br>Découverte des sites…</div>';
 
   try {
     const res = await fetch('/api/sites' + (force ? '?refresh=1' : ''));

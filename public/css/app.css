@@ -1,6 +1,6 @@
-/* 
- * app.css — surcharges Bootstrap + composants spécifiques Osuny Manager
- * Bootstrap est chargé via CDN dans index.html.
+/*
+ * app.css — composants spécifiques Osuny Manager
+ * Bootstrap 5 dark mode activé via data-bs-theme="dark" sur <html>.
  */
 
 /* ── Variables ───────────────────────────────────────────────────────────────── */
@@ -16,6 +16,7 @@
   --om-red:      #f05b6a;
   --om-muted:    #8b90a7;
   --om-subtle:   #555c7a;
+  --om-mono:     'IBM Plex Mono', monospace;
 }
 
 /* ── Reset de base ───────────────────────────────────────────────────────────── */
@@ -114,40 +115,6 @@ body {
 .panel-title { font-size: 15px; font-weight: 600; margin: 0; }
 .panel-subtitle { font-size: 12px; color: var(--om-muted); }
 
-/* ── Bootstrap overrides (dark theme) ────────────────────────────────────────── */
-.form-control, .form-select {
-  background-color: var(--om-surface2);
-  border-color: var(--om-border);
-  color: var(--om-text);
-  font-size: 13px;
-}
-.form-control:focus, .form-select:focus {
-  background-color: var(--om-surface2);
-  border-color: var(--om-accent);
-  color: var(--om-text);
-  box-shadow: 0 0 0 .2rem rgba(91,138,240,.2);
-}
-.form-control::placeholder { color: var(--om-subtle); }
-.form-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--om-muted); }
-.form-text { color: var(--om-subtle); font-size: 11px; }
-
-.btn-primary   { background: var(--om-accent); border-color: var(--om-accent); }
-.btn-primary:hover { background: #4a79df; border-color: #4a79df; }
-.btn-danger    { background: var(--om-red); border-color: var(--om-red); }
-.btn-outline-secondary {
-  border-color: var(--om-border);
-  color: var(--om-muted);
-  font-size: 12px;
-}
-.btn-outline-secondary:hover { background: var(--om-surface2); color: var(--om-text); border-color: var(--om-accent); }
-.btn-sm { font-size: 12px; }
-
-.input-group-text {
-  background: var(--om-surface2);
-  border-color: var(--om-border);
-  color: var(--om-muted);
-}
-
 /* ── Sites list ──────────────────────────────────────────────────────────────── */
 #sites-list { flex: 1; overflow-y: auto; }
 #sites-list::-webkit-scrollbar { width: 5px; }
@@ -186,13 +153,13 @@ body {
 
 /* Submodule status tags */
 .submod-tag {
-  display: inline-block;
   font-family: var(--om-mono);
   font-size: 10px;
   font-weight: 600;
   padding: 1px 5px;
   border-radius: 3px;
   white-space: nowrap;
+  display: inline-block;
 }
 .submod-tag.ok           { background: rgba(61,232,160,.12); color: var(--om-green); }
 .submod-tag.modified     { background: rgba(240,162,91,.12);  color: var(--om-orange); }
@@ -236,34 +203,11 @@ body {
 .terminal-output .t-err  { color: var(--om-red); }
 .terminal-output .t-info { color: var(--om-accent); }
 
-/* ── Job badges ──────────────────────────────────────────────────────────────── */
-.job-badge {
-  font-family: var(--om-mono);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 3px;
-}
+/* ── Job badges (couleurs seulement — base via Bootstrap .badge) ─────────────── */
 .job-badge.idle      { background: rgba(139,144,167,.1);  color: var(--om-subtle); }
 .job-badge.running   { background: rgba(240,162,91,.15);  color: var(--om-orange); }
 .job-badge.done      { background: rgba(61,232,160,.12);  color: var(--om-green); }
 .job-badge.cancelled { background: rgba(240,91,106,.12);  color: var(--om-red); }
-
-/* ── Progress bar ────────────────────────────────────────────────────────────── */
-.progress-thin {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--om-border);
-  overflow: hidden;
-  flex: 1;
-}
-.progress-thin .progress-bar {
-  height: 100%;
-  background: var(--om-accent);
-  border-radius: 2px;
-  transition: width .3s;
-  width: 0%;
-}
 
 /* ── Results table ───────────────────────────────────────────────────────────── */
 .results-wrap {
@@ -275,21 +219,15 @@ body {
 .results-wrap::-webkit-scrollbar { width: 5px; }
 .results-wrap::-webkit-scrollbar-thumb { background: var(--om-border); border-radius: 3px; }
 
-.results-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; }
 .results-table thead th {
   position: sticky; top: 0;
   background: var(--om-surface);
-  padding: 7px 12px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .06em;
   color: var(--om-subtle);
-  border-bottom: 1px solid var(--om-border);
-  text-align: left;
 }
-.results-table tbody td { padding: 6px 12px; border-bottom: 1px solid var(--om-border); }
-.results-table tbody tr:hover td { background: var(--om-surface); }
 
 .score { font-family: var(--om-mono); font-weight: 700; }
 .score.good { color: var(--om-green); }
@@ -321,19 +259,7 @@ body {
 @keyframes toastIn { from { transform: translateX(16px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 /* ── Misc ────────────────────────────────────────────────────────────────────── */
-.spinner-xs {
-  display: inline-block;
-  width: 10px; height: 10px;
-  border: 2px solid var(--om-border);
-  border-top-color: var(--om-accent);
-  border-radius: 50%;
-  animation: spin .6s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
 .empty-state { padding: 32px 20px; color: var(--om-subtle); text-align: center; font-size: 13px; }
-
-.vr { width: 1px; background: var(--om-border); align-self: stretch; margin: 0 4px; }
 
 /* Bouton "↗ rapport" dans les tableaux de résultats */
 .report-link {

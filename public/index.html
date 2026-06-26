@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -104,7 +104,7 @@
           <div></div>
         </div>
         <div id="sites-container">
-          <div class="empty-state"><div class="spinner-xs"></div><br>Chargement…</div>
+          <div class="empty-state"><span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span><br>Chargement…</div>
         </div>
       </div>
     </div>
@@ -162,8 +162,8 @@
       <!-- Terminal -->
       <div class="terminal-wrap">
         <div class="terminal-bar">
-          <span class="job-badge idle" id="badge-submod">Inactif</span>
-          <div class="progress-thin"><div class="progress-bar" id="bar-submod"></div></div>
+          <span class="badge job-badge idle" id="badge-submod">Inactif</span>
+          <div class="progress flex-grow-1" style="height:3px"><div class="progress-bar" id="bar-submod"></div></div>
           <span class="text-muted" id="progress-text-submod" style="font-size:11px;font-family:var(--om-mono);white-space:nowrap;"></span>
         </div>
         <pre class="terminal-output" id="term-submod"></pre>
@@ -211,15 +211,15 @@
 
       <div class="terminal-wrap">
         <div class="terminal-bar">
-          <span class="job-badge idle" id="badge-w3c">Inactif</span>
-          <div class="progress-thin"><div class="progress-bar" id="bar-w3c"></div></div>
+          <span class="badge job-badge idle" id="badge-w3c">Inactif</span>
+          <div class="progress flex-grow-1" style="height:3px"><div class="progress-bar" id="bar-w3c"></div></div>
           <span class="text-muted" id="progress-text-w3c" style="font-size:11px;font-family:var(--om-mono);"></span>
         </div>
         <pre class="terminal-output" id="term-w3c"></pre>
       </div>
 
       <div class="results-wrap" id="results-wrap-w3c" style="display:none">
-        <table class="results-table">
+        <table class="results-table table table-sm table-hover mb-0">
           <thead><tr><th>URL</th><th>Erreurs</th><th>Avert.</th><th>Statut</th><th></th></tr></thead>
           <tbody id="results-tbody-w3c"></tbody>
         </table>
@@ -266,15 +266,15 @@
 
       <div class="terminal-wrap">
         <div class="terminal-bar">
-          <span class="job-badge idle" id="badge-schema">Inactif</span>
-          <div class="progress-thin"><div class="progress-bar" id="bar-schema"></div></div>
+          <span class="badge job-badge idle" id="badge-schema">Inactif</span>
+          <div class="progress flex-grow-1" style="height:3px"><div class="progress-bar" id="bar-schema"></div></div>
           <span class="text-muted" id="progress-text-schema" style="font-size:11px;font-family:var(--om-mono);"></span>
         </div>
         <pre class="terminal-output" id="term-schema"></pre>
       </div>
 
       <div class="results-wrap" id="results-wrap-schema" style="display:none">
-        <table class="results-table">
+        <table class="results-table table table-sm table-hover mb-0">
           <thead><tr><th>URL</th><th>Erreurs</th><th>Triplets</th><th>Statut</th><th></th></tr></thead>
           <tbody id="results-tbody-schema"></tbody>
         </table>
@@ -325,15 +325,15 @@
 
       <div class="terminal-wrap">
         <div class="terminal-bar">
-          <span class="job-badge idle" id="badge-pagespeed">Inactif</span>
-          <div class="progress-thin"><div class="progress-bar" id="bar-pagespeed"></div></div>
+          <span class="badge job-badge idle" id="badge-pagespeed">Inactif</span>
+          <div class="progress flex-grow-1" style="height:3px"><div class="progress-bar" id="bar-pagespeed"></div></div>
           <span class="text-muted" id="progress-text-pagespeed" style="font-size:11px;font-family:var(--om-mono);"></span>
         </div>
         <pre class="terminal-output" id="term-pagespeed"></pre>
       </div>
 
       <div class="results-wrap" id="results-wrap-pagespeed" style="display:none">
-        <table class="results-table">
+        <table class="results-table table table-sm table-hover mb-0">
           <thead><tr><th>URL</th><th>Perf.</th><th>A11y</th><th>SEO</th><th>BP</th><th>LCP</th><th>CLS</th><th>TBT</th><th></th></tr></thead>
           <tbody id="results-tbody-pagespeed"></tbody>
         </table>

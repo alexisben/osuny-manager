@@ -58,7 +58,7 @@ export function termClear(terminalId) {
 export function setBadge(badgeId, state, label) {
   const el = document.getElementById(badgeId);
   if (!el) return;
-  el.className = `job-badge ${state}`;
+  el.className = `badge job-badge ${state}`;
   el.textContent = label;
 }
 
